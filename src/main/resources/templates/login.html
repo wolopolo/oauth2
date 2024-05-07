@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="icon" type="image/x-icon" href="/static/image/favicon.ico">
+    <title>Sign in</title>
+</head>
+<body>
+    <form class="container" method="post" action="/login">
+        <div class="title">Sign in</div>
+        <div th:text="${param.error}" style="text-align: center; color: red;"></div>
+        <div th:if="${param.error}" style="text-align: center; color: red;">Invalid username and password!</div>
+		<div th:if="${param.logout}" style="text-align: center; color: blue;">You have been logged out</div>
+        <input type="email" name="username" placeholder="Email..." class="block input-control" required autofocus maxlength="30" />
+        <input type="password" name="password" placeholder="Password..." class="block input-control" required id="password"  maxlength="30" minlength="8"/>
+        <div class="block"><input type="checkbox" onclick="showPassword()"/> Show password </div>
+        <!-- <div class="block"><input type="checkbox" name="remember"/> Remember me</div> -->
+        <button type="submit" class="block submit-btn">Sign in</button>
+        <a href="/request-forgot-password" class="block" style="text-align: center; color: black;">Forgot password?</a>
+        <a href="/register" class="block" style="text-align: center; color: black;">Register now!</a>
+    </form>
+
+    <script>
+        const showPassword = function () {
+            const pwd = document.getElementById("password");
+            pwd.type = pwd.type === "password" ? "text" : "password";
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: cursive;
+        }
+
+        .container {
+            box-shadow: 0 0 25px black;
+            border-radius: 5px;
+            padding: 20px;
+            width: 300px;
+            position: absolute;
+            margin-left: auto;
+            margin-right: auto;
+            left: 0;
+            right: 0;
+            top: 150px;
+        }
+
+        .title {
+            font-size: 50px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .block {
+            display: block;
+            margin: 10px auto;
+            width: 90%;
+        }
+
+        .input-control {
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            font-size: large;
+            font-family: cursive;
+        }
+
+        .submit-btn {
+            border: none;
+            color: white;
+            background: black;
+            height: 38px;
+            border-radius: 5px;
+            font-family: cursive;
+            font-weight: bold;
+        }
+        
+    </style>
+</body>
+</html>

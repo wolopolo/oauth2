@@ -1,0 +1,5 @@
+<p>Welcome to OAuth2!</p>
+<p>You have successfully registered an account!</p>
+<p>Please click the link below to verify your account:</p>
+<p><a th:href="@{http://localhost:9000/verify/{token}(token=${token})}">http://localhost:9000/verify/<span th:text="${token}"></span></a></p>
+<p>This link is valid for 24 hours from the request for authentication.</p>

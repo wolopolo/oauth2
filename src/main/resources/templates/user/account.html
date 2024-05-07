@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Account</title>
+    <link href="/static/css/user/account.css" rel="stylesheet"/>
+    <link rel="icon" type="image/x-icon" href="/static/image/favicon.ico">
+</head>
+<body>
+    
+    <table class="info_table">
+        <tr>
+            <td colspan="2" class="head_table">Account</td>
+        </tr>
+        <tr>
+            <td class="title_table">Email</td>
+            <td th:text="${accountInfo.email}"></td>
+        </tr>
+        <tr>
+            <td>Name</td>
+            <td th:text="${accountInfo.name}"></td>
+        </tr>
+        <tr>
+            <td>Role</td>
+            <td th:text="${accountInfo.role}"></td>
+        </tr>
+        <tr>
+            <td>Status</td>
+            <td>
+                <span th:style="${accountInfo.isVerified} ? 'color: green' : 'color: red'" th:text="${accountInfo.isVerified} ? 'verified' : 'not verified'">verified</span>
+            </td>
+        </tr>
+        <tr>
+            <td>Option</td>
+            <td>
+                <div><a href="/change-password" style="color: blue;">Change password</a></div>
+                <div><a href="/logout" style="color: blue;">Logout</a></div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

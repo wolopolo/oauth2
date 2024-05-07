@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="icon" type="image/x-icon" href="/static/image/favicon.ico">
+    <link href="/static/css/admin/accounts.css" rel="stylesheet"/>
+    <link href="file:///J:/wolopolo/oauth2/src/main/resources/static/css/admin/accounts.css" rel="stylesheet"/>
+    <title>Accounts</title>
+</head>
+<body>
+    <div class="header">
+        <span>
+            <a href="/admin/accounts">Account management</a>
+            <a href="/admin/clients">Client management</a>
+        </span>
+        <span class="logout">
+            <a href="/logout">Logout</a>
+        </span>
+    </div>
+
+    <div class="content">
+        <div class="filter">
+            <span class="element_filter">
+                <span>
+                    Email
+                </span>
+                <span>
+                    <input name="email" type="text" id="email_filter"/>
+                </span>
+            </span>
+            <span class="element_filter">
+                <span>
+                    Name
+                </span>
+                <span>
+                    <input name="name" type="text" id="name_filter"/>
+                </span>
+            </span>
+            <span class="element_filter">
+                <span>
+                    Role
+                </span>
+                <span>
+                    <input name="role" type="text" id="role_filter"/>
+                </span>
+            </span>
+            <span class="element_filter">
+                <span>
+                    Verified
+                </span>
+                <span>
+                    <select name="isVerified" id="verified_filter">
+                        <option value="">All</option>
+                        <option value="true">Verified</option>
+                        <option value="false">Not verified</option>
+                    </select>
+                </span>
+            </span>
+            <span class="element_filter">
+                <span>
+                    Activated
+                </span>
+                <span>
+                    <select name="isActive" id="activated_filter">
+                        <option value="">All</option>
+                        <option value="true">Activated</option>
+                        <option value="false">Not activated</option>
+                    </select>
+                </span>
+            </span>
+            <span class="element_filter">
+                <button onclick="search()">Search</button>
+            </span>
+        </div>
+        
+        <div class="main_content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Email<span class="sort_icn" onclick="sort('email', this)">⇅</span></th>
+                        <th>Name<span class="sort_icn" onclick="sort('name', this)">⇅</span></th>
+                        <th>Role<span class="sort_icn" onclick="sort('role', this)">⇅</span></th>
+                        <th>Verified<span class="sort_icn" onclick="sort('isVerified', this)">⇅</span></th>
+                        <th>Activated<span class="sort_icn" onclick="sort('isActive', this)">⇅</span></th>
+                        <th>Created date<span class="sort_icn" onclick="sort('createdDate', this)">⇅</span></th>
+                        <th>Created by<span class="sort_icn" onclick="sort('createdBy', this)">⇅</span></th>
+                        <th>Modified date<span class="sort_icn" onclick="sort('lastModifiedDate', this)">⇅</span></th>
+                        <th>Modified by<span class="sort_icn" onclick="sort('lastModifiedBy', this)">⇅</span></th>
+                    </tr>
+                </thead>
+                
+                <tbody id="body_table">
+                    
+                </tbody>
+            </table>
+            <div class="paging_content">
+                <span class="paging_btn" onclick="getFirstPage()"><<</span>
+                <span class="paging_btn" onclick="getPreviousPage()"><</span>
+                <span class="paging_btn" id="current_page">current</span>
+                <span class="paging_btn" onclick="getNextPage()">></span>
+                <span class="paging_btn" onclick="getLastPage()">>></span>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let lastPage = 1;
+        let size = 20;
+        let sortBy = null;
+        let sortType = null;
+        let noSortIcn = "⇅";
+        let ascSortIcn = "↑";
+        let descSortIcn = "↓";
+
+        const search = function () {
+            const email = document.getElementById("email_filter").value;
+            const name = document.getElementById("name_filter").value;
+            const role = document.getElementById("role_filter").value;
+            const isVerified = document.getElementById("verified_filter").value;
+            const isActive = document.getElementById("activated_filter").value;
+
+            fetch("/api/v1/admin/accounts", {
+                headers: {
+                    "Content-type": "application/json"
+                },
+                method: "POST",
+                body: JSON.stringify({ 
+                    email, name, role, isVerified, isActive, 
+                    page: currentPage, size,
+                    sortBy, sortType
+                })
+            })
+            .then(resp => resp.json())
+            .then(jsonResp => jsonResp.body)
+            .then(body => {
+                fillDataOnTable(body.content);
+                fillPageInfo(body);
+            })
+        }
+
+        const fillDataOnTable = function (items) {
+            const bodyTable = document.getElementById("body_table");
+
+            let textElements;
+            if(items.length) {
+                textElements = items.map(item => {
+                return (
+                    `<tr>
+                        <td>${item.email}</td>
+                        <td>${item.name}</td>
+                        <td>${item.role}</td>
+                        <td>${item.isVerified}</td>
+                        <td>${item.isActive}</td>
+                        <td>${item.createdDate}</td>
+                        <td>${item.createdBy}</td>
+                        <td>${item.lastModifiedDate}</td>
+                        <td>${item.lastModifiedBy}</td>
+                    </tr>`
+                )
+                }).join("");
+            } else {
+                textElements = `
+                    <tr>
+                        <td colspan="9" style="text-align:center">No data!</td>
+                    </tr>
+                `
+            }
+            
+
+            bodyTable.innerHTML = textElements;
+        }
+
+        const fillPageInfo = function (body) {
+            currentPage = body.number + 1;
+            lastPage = body.totalPages;
+            const currentPageInfo = document.getElementById("current_page");
+            currentPageInfo.innerHTML = `
+                ${currentPage}/${lastPage}/${body.totalElements}
+            `
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            search();
+        });
+
+        const getFirstPage = function () {
+            currentPage = 1;
+
+            search();
+        }
+
+        const getPreviousPage = function () {
+            if(currentPage != 1) {
+                currentPage--;
+            }
+
+            search();
+        }
+
+        const getNextPage = function () {
+            if(currentPage != lastPage) {
+                currentPage++;
+            }
+
+            search();
+        }
+
+        const getLastPage = function () {
+            currentPage = lastPage;
+
+            search();
+        }
+
+        const sort = function (currentSortBy, currentElement) {
+            const sortElements = document.getElementsByClassName("sort_icn");
+            for(let element of sortElements) {
+                element.innerHTML = noSortIcn;
+            };
+
+            if(sortBy != currentSortBy) {
+                sortBy = currentSortBy;
+                sortType = "ASC";
+                currentElement.innerHTML = ascSortIcn;
+            } else {
+                if(sortBy == null && sortType == null) {
+                    sortBy = currentSortBy;
+                    sortType = "ASC";
+                    currentElement.innerHTML = ascSortIcn;
+                } else if(sortType == "ASC") {
+                    sortBy = currentSortBy;
+                    sortType = "DESC";
+                    currentElement.innerHTML = descSortIcn;
+                } else if(sortType == "DESC") {
+                    sortBy = null;
+                    sortType = null;
+                }
+            }
+
+            search();
+        }
+        
+    </script>
+</body>
+</html>

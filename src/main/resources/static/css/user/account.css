@@ -1,0 +1,39 @@
+body {
+    font-family: cursive;
+}
+
+.info_table {
+    box-shadow: 0 0 20px black;
+    border-radius: 5px;
+    padding: 20px;
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    top: 150px;
+}
+
+.head_table {
+    text-align: center;
+    font-size: 46px;
+}
+
+.title_table {
+    width: 37%;
+}
+
+.status {
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background-color: white;
+}
+
+.verified {
+    color: rgb(30, 255, 30);
+}
+
+.notverified {
+    color: rgb(255, 3, 3);
+}
