@@ -137,9 +137,12 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         account.setPassword(passwordEncoder.encode(changePasswordReq.getNewPassword()));
     }
 
+    @Transactional
     @Override
-    public boolean lock() {
-        return false;
+    public void changeActiveStatus(String email) {
+        Account account = accountRepo.findById(email).orElseThrow();
+
+        account.setActive(!account.isActive());
     }
 
     @Override

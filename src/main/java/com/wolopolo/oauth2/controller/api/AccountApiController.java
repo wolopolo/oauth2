@@ -3,6 +3,7 @@ package com.wolopolo.oauth2.controller.api;
 import com.wolopolo.oauth2.dto.CommonResponse;
 import com.wolopolo.oauth2.dto.account.AccountRegisterReq;
 import com.wolopolo.oauth2.dto.account.AccountSearchReq;
+import com.wolopolo.oauth2.dto.account.ChangeAccountStatusReq;
 import com.wolopolo.oauth2.dto.account.ChangePasswordReq;
 import com.wolopolo.oauth2.dto.account.ForgotPasswordReq;
 import com.wolopolo.oauth2.dto.account.RequestForgotPasswordReq;
@@ -27,6 +28,12 @@ public class AccountApiController {
     @PostMapping("/api/v1/admin/accounts")
     public CommonResponse search(@RequestBody AccountSearchReq accountSearchReq) {
         return CommonResponse.returnOk(accountService.search(accountSearchReq));
+    }
+
+    @PostMapping("/api/v1/admin/change-active-status")
+    public CommonResponse changeActiveStatus(@RequestBody @Valid ChangeAccountStatusReq changeAccountStatusReq) {
+        accountService.changeActiveStatus(changeAccountStatusReq.getEmail());
+        return CommonResponse.returnOk(null);
     }
 
     @PostMapping("/api/v1/change-password")

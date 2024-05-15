@@ -107,6 +107,23 @@
         
     </div>
 
+    <div id="activeStatusPopup" class="popup hidden">
+        <div class="popup_content">
+            <div>Do you want change active status of <span id="activeStatusRecord"></span> ?</div>
+            <div class="popup_option">
+                <button onclick="closeChangeStatusPopup('activeStatusPopup')">No</button>
+                <button id="btnChangeStatusPopup" onclick="changeStatusPopup()">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="messagePopup" class="popup hidden">
+        <div class="popup_content">
+            <div id="messageContent">Status change successful!</div>
+            <div class="popup_option"><button onclick="closeChangeStatusPopup('messagePopup')">Close</button></div>
+        </div>
+    </div>
+
     <script>
         let currentPage = 1;
         let lastPage = 1;
@@ -154,8 +171,8 @@
                         <td>${item.email}</td>
                         <td>${item.name}</td>
                         <td>${item.role}</td>
-                        <td>${item.isVerified}</td>
-                        <td>${item.isActive}</td>
+                        <td class="${item.isVerified}">${item.isVerified}</td>
+                        <td class="btn_active ${item.isActive}" onclick="getChangeStatusPopup('${item.email}')">${item.isActive}</td>
                         <td>${item.createdDate}</td>
                         <td>${item.createdBy}</td>
                         <td>${item.lastModifiedDate}</td>
@@ -242,6 +259,57 @@
             }
 
             search();
+        }
+
+        const getChangeStatusPopup = function (email) {
+            const activeStatusPopup = document.getElementById("activeStatusPopup");
+            const cssAttr = activeStatusPopup.getAttribute("class");
+            activeStatusPopup.setAttribute("class", cssAttr.replace("hidden", "show"));
+            const activeStatusRecord = document.getElementById("activeStatusRecord");
+            activeStatusRecord.innerText = email;
+            const btnChangeStatusPopup = document.getElementById("btnChangeStatusPopup");
+            btnChangeStatusPopup.setAttribute("onclick", "changeStatusPopup('" + email + "')");
+        }
+
+        const closeChangeStatusPopup = function (popupId) {
+            const popup = document.getElementById(popupId);
+            const cssAttr = popup.getAttribute("class");
+            popup.setAttribute("class", cssAttr.replace("show", "hidden"));
+        }
+
+        const changeStatusPopup = function (email) {
+            fetch("/api/v1/admin/change-active-status", {
+                headers: {
+                    "Content-type": "application/json"
+                },
+                method: "POST",
+                body: JSON.stringify({
+                    email
+                })
+            })
+            .then(resp => resp.json())
+            .then(jsonResp => {
+                if(jsonResp.status == 200) {
+                    showMessage("Status change successful!");
+                    search();
+                } else {
+                    showMessage("Status change failed!");
+                }
+            })
+            .catch(() => {
+                showMessage("Status change failed!");
+            })
+
+            closeChangeStatusPopup("activeStatusPopup");
+        }
+
+        const showMessage = function (text) {
+            const messageContent = document.getElementById("messageContent");
+            messageContent.innerText = text;
+
+            const messagePopup = document.getElementById("messagePopup");
+            const cssAttr = messagePopup.getAttribute("class");
+            messagePopup.setAttribute("class", cssAttr.replace("hidden", "show"));
         }
         
     </script>

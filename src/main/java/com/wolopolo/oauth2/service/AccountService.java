@@ -16,5 +16,5 @@ public interface AccountService {
     void requestForgotPassword(String email);
     void forgotPassword(ForgotPasswordReq forgotPasswordReq);
     void changePassword(String principal, ChangePasswordReq changePasswordReq);
-    boolean lock();
+    void changeActiveStatus(String email);
 }
