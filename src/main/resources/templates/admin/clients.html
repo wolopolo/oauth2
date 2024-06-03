@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="icon" type="image/x-icon" href="/static/image/favicon.ico">
+    <link href="/static/css/admin/common.css" rel="stylesheet"/>
+    <link href="/static/css/admin/clients.css" rel="stylesheet"/>
+    <link href="file:///J:/wolopolo/oauth2/src/main/resources/static/css/admin/common.css" rel="stylesheet"/>
+    <link href="file:///J:/wolopolo/oauth2/src/main/resources/static/css/admin/clients.css" rel="stylesheet"/>
+    <title>Clients</title>
+</head>
+<body>
+    <div class="header">
+        <span>
+            <a href="/admin/accounts">Account management</a>
+            <a href="/admin/clients">Client management</a>
+        </span>
+        <span class="logout">
+            <a href="/logout">Logout</a>
+        </span>
+    </div>
+
+    <div class="content">
+        <div class="filter">
+            <span class="element_filter">
+                <span>
+                    ClientId
+                </span>
+                <span>
+                    <input name="clientId" type="text" id="clientIdFilter"/>
+                </span>
+            </span>
+
+            <span class="element_filter">
+                <button onclick="search()">Search</button>
+            </span>
+
+            <span class="element_filter">
+                <button onclick="showPopup('addNewPopup')">Add a new client</button>
+            </span>
+        </div>
+        
+        <div class="main_content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ClientId<span class="sort_icn" onclick="sort('clientId', this)">⇅</span></th>
+                        <th>Authentication Methods<span class="sort_icn" onclick="sort('clientAuthenticationMethods', this)">⇅</span></th>
+                        <th>Grant Types<span class="sort_icn" onclick="sort('authorizationGrantTypes', this)">⇅</span></th>
+                        <th>Redirect Uris<span class="sort_icn" onclick="sort('redirectUris', this)">⇅</span></th>
+                        <th>Scopes<span class="sort_icn" onclick="sort('scopes', this)">⇅</span></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                
+                <tbody id="body_table">
+                    
+                </tbody>
+            </table>
+            <div class="paging_content">
+                <span class="paging_btn" onclick="getFirstPage()"><<</span>
+                <span class="paging_btn" onclick="getPreviousPage()"><</span>
+                <span class="paging_btn" id="current_page">current</span>
+                <span class="paging_btn" onclick="getNextPage()">></span>
+                <span class="paging_btn" onclick="getLastPage()">>></span>
+            </div>
+        </div>
+        
+    </div>
+
+    <div id="addNewPopup" class="popup hidden">
+        <div class="popup_content">
+            <div>Add new client</div>
+            <div>
+                <div>
+                    <input id="clientId" type="text" placeholder="Client id"/>
+                </div>
+                <div>
+                    <input id="clientSecret" type="text" placeholder="Client secret"/>
+                </div>
+                <div>
+                    <input id="redirectUris" type="url" placeholder="Redirect Uris"/>
+                </div>
+                <div>
+                    <input id="scopes" type="text" placeholder="Scopes"/>
+                </div>
+                <div>
+                    <input id="tokenTimeToLive" type="number" min="1" placeholder="Token time to live"/>
+                </div>
+            </div>
+            <div class="popup_option">
+                <button onclick="closePopup('addNewPopup')" type="reset">Cancel</button>
+                <button onclick="save()" type="submit">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="updatePopup" class="popup hidden">
+        <div class="popup_content">
+            <div>Add new client</div>
+            <div>
+                <div>
+                    <input id="clientIdUpdate" type="text" placeholder="Client id" disabled/>
+                </div>
+                <div>
+                    <input id="clientSecretUpdate" type="text" placeholder="Client secret"/>
+                </div>
+                <div>
+                    <input id="redirectUrisUpdate" type="url" placeholder="Redirect Uris"/>
+                </div>
+                <div>
+                    <input id="scopesUpdate" type="text" placeholder="Scopes"/>
+                </div>
+                <div>
+                    <input id="tokenTimeToLiveUpdate" type="number" min="1" placeholder="Token time to live"/>
+                </div>
+            </div>
+            <div class="popup_option">
+                <button onclick="closePopup('updatePopup')" type="reset">Cancel</button>
+                <button onclick="updateItem()" type="submit">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="messagePopup" class="popup hidden">
+        <div class="popup_content">
+            <div id="messageContent"></div>
+            <div class="popup_option"><button onclick="closePopup('messagePopup')">Close</button></div>
+        </div>
+    </div>
+
+    <div id="confirmPopup" class="popup hidden">
+        <div class="popup_content">
+            <div id="confirmContent"></div>
+            <div class="popup_option">
+                <button id="noConfirm">No</button>
+                <button id="yesConfirm">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let lastPage = 1;
+        let size = 20;
+        let sortBy = null;
+        let sortType = null;
+        let noSortIcn = "⇅";
+        let ascSortIcn = "↑";
+        let descSortIcn = "↓";
+
+        const search = function () {
+            const clientId = document.getElementById("clientIdFilter").value;
+
+            fetch("/api/v1/admin/clients/search", {
+                headers: {
+                    "Content-type": "application/json"
+                },
+                method: "POST",
+                body: JSON.stringify({ 
+                    clientId,
+                    page: currentPage, size,
+                    sortBy, sortType
+                })
+            })
+            .then(resp => resp.json())
+            .then(jsonResp => jsonResp.body)
+            .then(body => {
+                fillDataOnTable(body.content);
+                fillPageInfo(body);
+            })
+        }
+
+        const fillDataOnTable = function (items) {
+            const bodyTable = document.getElementById("body_table");
+
+            let textElements;
+            if(items.length) {
+                textElements = items.map(item => {
+                return (
+                    `<tr>
+                        <td>${item.clientId}</td>
+                        <td>${item.clientAuthenticationMethods}</td>
+                        <td>${item.authorizationGrantTypes}</td>
+                        <td>${item.redirectUris}</td>
+                        <td>${item.scopes}</td>
+                        <td>
+                            <button onclick="update('${item.clientId}')">Update</button>
+                            <button onclick="deleteItem('${item.clientId}')">Delete</button>
+                        </td>
+                    </tr>`
+                )
+                }).join("");
+            } else {
+                textElements = `
+                    <tr>
+                        <td colspan="5" style="text-align:center">No data!</td>
+                    </tr>
+                `
+            }
+            
+
+            bodyTable.innerHTML = textElements;
+        }
+
+        const fillPageInfo = function (body) {
+            currentPage = body.number + 1;
+            lastPage = body.totalPages;
+            const currentPageInfo = document.getElementById("current_page");
+            currentPageInfo.innerHTML = `
+                ${currentPage}/${lastPage}/${body.totalElements}
+            `
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            search();
+        });
+
+        const getFirstPage = function () {
+            currentPage = 1;
+
+            search();
+        }
+
+        const getPreviousPage = function () {
+            if(currentPage != 1) {
+                currentPage--;
+            }
+
+            search();
+        }
+
+        const getNextPage = function () {
+            if(currentPage != lastPage) {
+                currentPage++;
+            }
+
+            search();
+        }
+
+        const getLastPage = function () {
+            currentPage = lastPage;
+
+            search();
+        }
+
+        const sort = function (currentSortBy, currentElement) {
+            const sortElements = document.getElementsByClassName("sort_icn");
+            for(let element of sortElements) {
+                element.innerHTML = noSortIcn;
+            };
+
+            if(sortBy != currentSortBy) {
+                sortBy = currentSortBy;
+                sortType = "ASC";
+                currentElement.innerHTML = ascSortIcn;
+            } else {
+                if(sortBy == null && sortType == null) {
+                    sortBy = currentSortBy;
+                    sortType = "ASC";
+                    currentElement.innerHTML = ascSortIcn;
+                } else if(sortType == "ASC") {
+                    sortBy = currentSortBy;
+                    sortType = "DESC";
+                    currentElement.innerHTML = descSortIcn;
+                } else if(sortType == "DESC") {
+                    sortBy = null;
+                    sortType = null;
+                }
+            }
+
+            search();
+        }
+
+        const showPopup = function(popupId) {
+            const popup = document.getElementById(popupId);
+            const cssAttr = popup.getAttribute("class");
+            popup.setAttribute("class", cssAttr.replace("hidden", "show"));
+        }
+
+        const closePopup = function(popupId) {
+            const popup = document.getElementById(popupId);
+            const cssAttr = popup.getAttribute("class");
+            popup.setAttribute("class", cssAttr.replace("show", "hidden"));
+        }
+
+        const showMessage = function(message) {
+            const messageContent = document.getElementById("messageContent");
+            messageContent.innerText = message;
+
+            showPopup("messagePopup");
+        }
+
+        const confirmAction = function(confirmContent, yesCallback, noCallback) {
+            document.getElementById("confirmContent").innerText = confirmContent;
+            document.getElementById("yesConfirm").onclick = yesCallback;
+            document.getElementById("noConfirm").onclick = noCallback;
+
+            showPopup("confirmPopup");
+        }
+
+        const save = function() {
+            const clientIdElm = document.getElementById("clientId");
+            const clientSecretElm = document.getElementById("clientSecret");
+            const redirectUrisElm = document.getElementById("redirectUris");
+            const scopesElm = document.getElementById("scopes");
+            const tokenTimeToLiveElm = document.getElementById("tokenTimeToLive");
+
+            fetch("/api/v1/admin/clients", {
+                headers: {
+                    "Content-type": "application/json"
+                },
+                method: "POST",
+                body: JSON.stringify({
+                    clientId: clientIdElm.value,
+                    clientSecret: clientSecretElm.value,
+                    redirectUris: redirectUrisElm.value,
+                    scopes: scopesElm.value,
+                    tokenTimeToLive: tokenTimeToLiveElm.value
+                })
+            })
+            .then(resp => resp.json())
+            .then(jsonResp => {
+                if(jsonResp.status == 200) {
+                    showMessage("Added a new client!");
+                    search();
+                } else {
+                    showMessage("Adding client failed!");
+                }
+            })
+            .catch(() => {
+                showMessage("Adding client failed!");
+            })
+            .finally(() => {
+                clientIdElm.value = "";
+                clientSecretElm.value = "";
+                redirectUrisElm.value = "";
+                scopesElm.value = "";
+                tokenTimeToLiveElm.value = "";
+
+                closePopup("addNewPopup");
+            })
+        }
+
+        const deleteItem = function(clientId) {
+            confirmAction(`Are you sure you want to delete ${clientId}?`,
+                () => {
+                    fetch(`/api/v1/admin/clients/${clientId}`, {
+                        method: "DELETE"
+                    })
+                    .then(resp => resp.json())
+                    .then(jsonResp => {
+                        if(jsonResp.status == 200) {
+                            showMessage(`Deleted ${clientId}!`);
+                            search();
+                        } else {
+                            showMessage(`Delete ${clientId} failed!`);
+                        }
+                    })
+                    .catch(() => {
+                        showMessage("Adding client failed!");
+                    })
+                    .finally(() => {
+                        closePopup("confirmPopup");
+                    })
+                }, () => {
+                    closePopup("confirmPopup");
+                }
+            );
+        }
+
+        const update = function (clientId) {
+            fetch(`/api/v1/admin/clients/${clientId}`, {
+                method: "GET"
+            })
+            .then(resp => resp.json())
+            .then(jsonResp => {
+                if(jsonResp.status == 200) {
+                    const body = jsonResp.body;
+
+                    document.getElementById("clientIdUpdate").value = body.clientId;
+                    document.getElementById("clientSecretUpdate").value = "";
+                    document.getElementById("redirectUrisUpdate").value = body.redirectUris;
+                    document.getElementById("scopesUpdate").value = body.scopes;
+                    document.getElementById("tokenTimeToLiveUpdate").value = body.tokenTimeToLive;
+
+                    showPopup("updatePopup");
+                } else {
+                    showMessage(`${clientId} not found!`);
+                }
+            })
+            .catch(() => {
+                showMessage(`${clientId} not found!`);
+            })
+        }
+
+        const updateItem = function() {
+            const clientIdElm = document.getElementById("clientIdUpdate");
+            const clientSecretElm = document.getElementById("clientSecretUpdate");
+            const redirectUrisElm = document.getElementById("redirectUrisUpdate");
+            const scopesElm = document.getElementById("scopesUpdate");
+            const tokenTimeToLiveElm = document.getElementById("tokenTimeToLiveUpdate");
+
+            fetch(`/api/v1/admin/clients`, {
+                headers: {
+                    "Content-type": "application/json"
+                },
+                method: "PUT",
+                body: JSON.stringify({
+                    clientId: clientIdElm.value,
+                    clientSecret: clientSecretElm.value,
+                    redirectUris: redirectUrisElm.value,
+                    scopes: scopesElm.value,
+                    tokenTimeToLive: tokenTimeToLiveElm.value
+                })
+            })
+            .then(resp => resp.json())
+            .then(jsonResp => {
+                if(jsonResp.status == 200) {
+                    showMessage(`${clientIdElm.value}'s information has been updated`);
+                    search();
+                } else {
+                    showMessage(`Updating ${clientIdElm.value}'s information failed`);
+                }
+            })
+            .catch(() => {
+                showMessage(`Updating ${clientIdElm.value}'s information failed`);
+            })
+            .finally(() => {
+                clientIdElm.value = "";
+                clientSecretElm.value = "";
+                redirectUrisElm.value = "";
+                scopesElm.value = "";
+                tokenTimeToLiveElm.value = "";
+
+                closePopup("updatePopup");
+            })
+        }
+    </script>
+</body>
+</html>
